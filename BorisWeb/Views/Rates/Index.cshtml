@@ -1,0 +1,80 @@
+﻿@model IEnumerable<BorisWeb.Models.Rate>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Welcome to BorisChats rate page</h1>
+
+<h4>
+    <a class="style-zero" asp-action="Create">Click here to create a new rate</a>
+    <br />
+    The average now is: @ViewBag.average
+</h4>
+
+<div class="d-flex justify-content-between align-items-center">
+    <form asp-action="Index">
+        <input name="text" id="search" />
+        <input type="submit" value="Search" />
+    </form>
+    <a class="style-zero" asp-action="Index">
+        <i class="bi bi-house name-size"></i>
+    </a>
+</div>
+
+@if (ViewBag.empty == "empty")
+{
+    <h3 class="style-zero">
+        No matches found
+    </h3>
+}
+else if (Model.Count() == 0)
+{
+    <h3 class="style-zero">
+        there are no rates yet,<br>
+        please be the first to rate us :)
+    </h3>
+}
+
+
+@foreach (var item in Model)
+{
+    <div class="blank-size container d-flex justify-content-center align-items-center">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="name-size">
+                    @item.Name
+                </div>
+                <div class="ratings">
+                    @for (int x = 0; x < @item.Rating; x++)
+                    {
+                        <i class="fa fa-star rating-color"></i>
+                    }
+                    @for (int x = 0; x < 5 - @item.Rating; x++)
+                    {
+                        <i class="fa fa-star"></i>
+                    }                   
+                </div>
+            </div>
+            <div class="review-size">
+                @item.Feedback
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="date-size">
+                    @item.Date
+                </div>
+                <div>
+                    <a class="style-zero" asp-action="Edit" asp-route-id="@item.Name">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a class="style-zero" asp-action="Details" asp-route-id="@item.Name">
+                        <i class="bi bi-zoom-in"></i>
+                    </a>
+                    <a class="style-zero" asp-action="Delete" asp-route-id="@item.Name">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
