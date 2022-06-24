@@ -210,9 +210,7 @@ namespace BorisKnowsAllApi.Controllers
                 return;
             }
 
-            // todo call transfer
             // calling invite on other server
-            contact.SendMessage(true, content);
             var payload = new Dictionary<string, string>
             {
                 { "from", username },
@@ -226,10 +224,16 @@ namespace BorisKnowsAllApi.Controllers
             try
             {
                 var response = await httpClient.PostAsync($"{contact.server}/api/transfer", postdata);
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception();
+                }
+                contact.SendMessage(true, content);
                 Console.WriteLine();
             } catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                Response.StatusCode = 304;
             }
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
         }
