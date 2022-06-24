@@ -30,7 +30,7 @@ namespace Services
                 {
                     if (user1.Username != user2.Username)
                     {
-                        string server = "https://localhost:7007";
+                        string server = "http://localhost:7007";
                         if (user1.GetContact(user2.Username) == null)
                         {
                             user1.AddContact(user2.Username, user2.Username, server);
