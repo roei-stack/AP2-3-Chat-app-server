@@ -92,6 +92,10 @@ namespace BorisKnowsAllApi.Controllers
             try
             {
                 var response = await httpClient.PostAsync($"{contact.server}/api/invitations", postdata);
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception();
+                }
                 user.AddContact(contact.id, contact.name, contact.server);
                 Console.WriteLine();
             }
