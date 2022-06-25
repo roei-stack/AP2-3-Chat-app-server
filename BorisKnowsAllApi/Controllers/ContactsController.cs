@@ -7,8 +7,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using BorisKnowsAllApi.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using FirebaseAdmin.Messaging;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+// For more information on enablin  g Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace BorisKnowsAllApi.Controllers
 {
@@ -18,6 +21,7 @@ namespace BorisKnowsAllApi.Controllers
     {
         private readonly UserService service;
         private readonly IHubContext<ChatHub> hub;
+        private static bool FirebaseExist = false;
 
         public ContactsController(IHubContext<ChatHub> hub)
         {
@@ -172,7 +176,7 @@ namespace BorisKnowsAllApi.Controllers
         /******************************************************************/
         // GET api/contacts/:id/messages
         [HttpGet("contacts/{id}/messages")]
-        public IEnumerable<Message> GetContactMessages(string username, string id)
+        public IEnumerable<OurMessage> GetContactMessages(string username, string id)
         {
             var user = service.Get(username);
             if (user == null)
@@ -240,17 +244,17 @@ namespace BorisKnowsAllApi.Controllers
 
         /******************************************************************/
         [HttpGet("contacts/{id}/messages/{id2}")]
-        public Message GetMessage(string username, string id, int id2)
+        public OurMessage GetMessage(string username, string id, int id2)
         {
             // return id2 message
-            IEnumerable <Message> list = GetContactMessages(username, id);
+            IEnumerable <OurMessage> list = GetContactMessages(username, id);
             if (list == null)
             {
                 Response.StatusCode = 404;
                 return null;
             }
             
-            Message message = list.ElementAtOrDefault(id2);
+            OurMessage message = list.ElementAtOrDefault(id2);
             if (message == null)
             {
                 Response.StatusCode = 404;
@@ -265,7 +269,7 @@ namespace BorisKnowsAllApi.Controllers
         public void EditMessage(string username, string id, int id2, [FromBody] string content)
         {
             // update a message
-            Message message = GetMessage(username, id, id2);
+            OurMessage message = GetMessage(username, id, id2);
             if (message == null)
             {
                 Response.StatusCode = 304;
@@ -280,7 +284,7 @@ namespace BorisKnowsAllApi.Controllers
         public void DeleteMessage(string username, string id, int id2)
         {
             // delete the message with that id
-            Message message = GetMessage(username, id, id2);
+            OurMessage message = GetMessage(username, id, id2);
             if (message == null)
             {
                 Response.StatusCode = 304;
@@ -339,7 +343,37 @@ namespace BorisKnowsAllApi.Controllers
             // 201 - created message
             contact.SendMessage(false, transfer.content);
             Response.StatusCode = 201;
+
+            // update using signalr
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
+
+            //update using firebase
+            if (!FirebaseExist)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("./Keys/BorisChats_private_key.json")
+                });
+                FirebaseExist = true;
+            }
+
+
+
+            // This registration token comes from the client FCM SDKs.
+            var registrationToken = "eoRiu1Qzayo:APA91bHz0o8_sygjb3LgRjXVUOgpDw2iM98r-t1quVxwmJngtj2I14L_WX1Mapyfa9vZMBaq-jtGyks18NA5X0CkAphH_tpSuDuTLok7D15TU6GDxx6phKuaN9MzV58VcDnQVHX4_UsS";
+
+            var message = new Message()
+            {
+                Token = registrationToken,
+                Notification = new Notification()
+                {
+                    Title = $"New message from {contact.id}",
+                    Body = contact.GetLastMessage().content
+                }
+            };
+
+            // Send a message to the device corresponding to the provided registration token.
+            await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
     }
 }

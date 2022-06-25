@@ -23,11 +23,11 @@ namespace Domain
 
         private int idCounter = 0;
 
-        private ICollection<Message> Messages { get; set; } = new List<Message>();
+        private ICollection<OurMessage> Messages { get; set; } = new List<OurMessage>();
 
         public void SendMessage(bool sent, string content)
         {
-            Message msg = new Message() {
+            OurMessage msg = new OurMessage() {
                 id = this.idCounter,
                 sent = sent,
                 content = content,
@@ -39,7 +39,7 @@ namespace Domain
             idCounter++;
         }
 
-        public Message GetLastMessage()
+        public OurMessage GetLastMessage()
         {
             if (Messages.Count == 0)
             {
@@ -48,9 +48,9 @@ namespace Domain
             return Messages.Last();
         }
 
-        public Message GetMessage(int messageId)
+        public OurMessage GetMessage(int messageId)
         {
-            foreach (Message message in Messages)
+            foreach (OurMessage message in Messages)
             {
                 if (message.id == messageId)
                 {
@@ -60,7 +60,7 @@ namespace Domain
             return null;
         }
 
-        public ICollection<Message> GetAllMessages()
+        public ICollection<OurMessage> GetAllMessages()
         {
             return Messages;
         }
