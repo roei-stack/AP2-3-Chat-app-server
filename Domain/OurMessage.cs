@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
-    public class Message
+    public class OurMessage
     {
         [Key]
         public int id { get; set; }

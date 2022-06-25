@@ -7,8 +7,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using BorisKnowsAllApi.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using FirebaseAdmin.Messaging;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+// For more information on enablin  g Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace BorisKnowsAllApi.Controllers
 {
@@ -172,7 +173,7 @@ namespace BorisKnowsAllApi.Controllers
         /******************************************************************/
         // GET api/contacts/:id/messages
         [HttpGet("contacts/{id}/messages")]
-        public IEnumerable<Message> GetContactMessages(string username, string id)
+        public IEnumerable<OurMessage> GetContactMessages(string username, string id)
         {
             var user = service.Get(username);
             if (user == null)
@@ -240,17 +241,17 @@ namespace BorisKnowsAllApi.Controllers
 
         /******************************************************************/
         [HttpGet("contacts/{id}/messages/{id2}")]
-        public Message GetMessage(string username, string id, int id2)
+        public OurMessage GetMessage(string username, string id, int id2)
         {
             // return id2 message
-            IEnumerable <Message> list = GetContactMessages(username, id);
+            IEnumerable <OurMessage> list = GetContactMessages(username, id);
             if (list == null)
             {
                 Response.StatusCode = 404;
                 return null;
             }
             
-            Message message = list.ElementAtOrDefault(id2);
+            OurMessage message = list.ElementAtOrDefault(id2);
             if (message == null)
             {
                 Response.StatusCode = 404;
@@ -265,7 +266,7 @@ namespace BorisKnowsAllApi.Controllers
         public void EditMessage(string username, string id, int id2, [FromBody] string content)
         {
             // update a message
-            Message message = GetMessage(username, id, id2);
+            OurMessage message = GetMessage(username, id, id2);
             if (message == null)
             {
                 Response.StatusCode = 304;
@@ -280,7 +281,7 @@ namespace BorisKnowsAllApi.Controllers
         public void DeleteMessage(string username, string id, int id2)
         {
             // delete the message with that id
-            Message message = GetMessage(username, id, id2);
+            OurMessage message = GetMessage(username, id, id2);
             if (message == null)
             {
                 Response.StatusCode = 304;
@@ -339,7 +340,30 @@ namespace BorisKnowsAllApi.Controllers
             // 201 - created message
             contact.SendMessage(false, transfer.content);
             Response.StatusCode = 201;
+
+            // update using signalr
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
+
+            //update using firebase
+            // This registration token comes from the client FCM SDKs.
+            var registrationToken = "fF3e9Y7VdWQ:APA91bELT0wZm2zgbF5vcrjOiXy0UrWsFEDmJ7G_X_ZkJc7y2MrG2XZJ_mRaLOAvqG9j7m6rNHTd0ZZXlZqeGVz2MFuaNneUkoPS_SZ-PaVB09OMnia1SrkwpOx_O69J5SxJVSyHgUZC";
+
+            // See documentation on defining a message payload.
+            var message = new Message()
+            {
+                Notification = new Notification()
+                {
+                    Title = "Test from code",
+                    Body = "Victory!"
+                },
+                Token = registrationToken,
+            };
+
+            // Send a message to the device corresponding to the provided
+            // registration token.
+            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            // Response is a message ID string.
+            Console.WriteLine("Successfully sent message: " + response);
         }
     }
 }
