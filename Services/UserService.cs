@@ -11,6 +11,23 @@ namespace Services
     {
         private static List<User> users = new List<User>();
 
+        private static Dictionary<User, string> firebaseTokens = new Dictionary<User, string>();
+
+        public void AddFirebaseToken(User user, string token)
+        {
+            firebaseTokens[user] = token;
+        }
+
+        public string GetUserToken(User user)
+        {
+            return firebaseTokens[user];
+        }
+
+        public bool ContainsTokenForUser(User u)
+        {
+            return firebaseTokens.ContainsKey(u);
+        }
+
         /*
         public UserService()
         {

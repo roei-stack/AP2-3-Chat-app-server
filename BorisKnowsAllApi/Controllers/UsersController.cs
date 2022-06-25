@@ -18,6 +18,53 @@ namespace BorisKnowsAllApi.Controllers
             service = new UserService();
         }
 
+        [HttpPost("token")]
+        public void SendToken(string username, [FromBody] String token)
+        {
+            if (username == null || token == null)
+            {
+                Response.StatusCode = 400;
+                return;
+            }
+            User user = service.Get(username);
+
+            if (user == null)
+            {
+                Response.StatusCode = 404;
+                return;
+            }
+            service.AddFirebaseToken(user, token);
+        }
+
+
+        [HttpGet("token")]
+        public string GetToken(string username)
+        {
+            if (string.IsNullOrEmpty(username))
+            {
+                Response.StatusCode = 400;
+                return null;
+            }
+
+            User u = service.Get(username);
+
+            if (u == null)
+            {
+                Response.StatusCode = 404;
+                return null;
+            }
+
+            if (!service.ContainsTokenForUser(u))
+            {
+                Response.StatusCode = 404;
+                return null;
+            }
+
+            string token = service.GetUserToken(u);
+            return token;
+        }
+        
+        
         [HttpPost, Route("Login")]
         public void Login([FromBody] User user)
         {
