@@ -10,6 +10,8 @@ namespace Domain
     public class Contact
     {
         [Key]
+        public int key { get; set; }
+
         public string id { get; set; }
 
         // nickname

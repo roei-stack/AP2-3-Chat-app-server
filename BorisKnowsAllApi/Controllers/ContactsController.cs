@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.SignalR;
 using FirebaseAdmin.Messaging;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using BorisKnowsAllApi.Data;
 
 // For more information on enablin  g Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,14 +20,16 @@ namespace BorisKnowsAllApi.Controllers
     [ApiController]
     public class ContactsController : ControllerBase
     {
-        private readonly UserService service;
         private readonly IHubContext<ChatHub> hub;
         private static bool FirebaseExist = false;
+        private readonly BorisKnowsAllApiContext _context;
+        private readonly UserDBService service;
 
-        public ContactsController(IHubContext<ChatHub> hub)
+        public ContactsController(IHubContext<ChatHub> hub, BorisKnowsAllApiContext context)
         {
-            this.service = new UserService();
             this.hub = hub;
+            _context = context;
+            service = new UserDBService(_context);
         }
 
         // GET: api/contacts/
@@ -100,7 +103,8 @@ namespace BorisKnowsAllApi.Controllers
                 {
                     throw new Exception();
                 }
-                user.AddContact(contact.id, contact.name, contact.server);
+                // user.AddContact(contact.id, contact.name, contact.server);
+                service.AddContact(user, contact);
                 Console.WriteLine();
             }
             catch (Exception e)
@@ -152,6 +156,7 @@ namespace BorisKnowsAllApi.Controllers
             // modify contact
             c.name = contact.name;
             c.server = contact.server;
+            service.EditContact(c);
             Response.StatusCode = 204;
         }
 
@@ -169,7 +174,8 @@ namespace BorisKnowsAllApi.Controllers
                 Response.StatusCode = 304;
                 return;
             }
-            user.DeleteContact(id);
+            // user.DeleteContact(id);
+            service.DeleteContact(user, user.GetContact(id));
             Response.StatusCode = 204;
         }
 
@@ -232,7 +238,8 @@ namespace BorisKnowsAllApi.Controllers
                 {
                     throw new Exception();
                 }
-                contact.SendMessage(true, content);
+                // contact.SendMessage(true, content);
+                service.SendMessage(contact, true, content);
                 Console.WriteLine();
             } catch (Exception e)
             {
@@ -276,6 +283,7 @@ namespace BorisKnowsAllApi.Controllers
                 return;
             }
             message.content = content;
+            service.EditMessage(message);
             Response.StatusCode = 204;
         }
 
@@ -290,7 +298,8 @@ namespace BorisKnowsAllApi.Controllers
                 Response.StatusCode = 304;
                 return;
             }
-            service.Get(username).GetContact(id).RemoveMessage(id2);
+            // service.Get(username).GetContact(id).RemoveMessage(id2);
+            service.DeleteMessage(service.Get(username).GetContact(id), message);
             Response.StatusCode = 204;
         }
 
@@ -317,7 +326,13 @@ namespace BorisKnowsAllApi.Controllers
 
             // 201 - created contact
             Response.StatusCode = 201;
-            user.AddContact(invitation.from, invitation.from, invitation.server);
+            // user.AddContact(invitation.from, invitation.from, invitation.server);
+            service.AddContact(user, new Contact
+            {
+                id = invitation.from,
+                name = invitation.from,
+                server = invitation.server
+            });
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
         }
 
@@ -341,7 +356,8 @@ namespace BorisKnowsAllApi.Controllers
                 return;
             }
             // 201 - created message
-            contact.SendMessage(false, transfer.content);
+            // contact.SendMessage(false, transfer.content);
+            service.SendMessage(contact, false, transfer.content);
             Response.StatusCode = 201;
 
             // update using signalr

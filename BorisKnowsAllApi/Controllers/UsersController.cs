@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using BorisKnowsAllApi.Data;
+using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using System.Net;
@@ -11,11 +12,13 @@ namespace BorisKnowsAllApi.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly UserService service;
+        private readonly UserDBService service;
+        private readonly BorisKnowsAllApiContext _context;
 
-        public UsersController()
+        public UsersController(BorisKnowsAllApiContext context)
         {
-            service = new UserService();
+            _context = context;
+            service = new UserDBService(context);
         }
 
         [HttpPost("token")]

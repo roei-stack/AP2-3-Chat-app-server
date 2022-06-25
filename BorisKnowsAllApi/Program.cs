@@ -1,6 +1,11 @@
-using BorisKnowsAllApi.Hubs;
+﻿using BorisKnowsAllApi.Hubs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using BorisKnowsAllApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<BorisKnowsAllApiContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BorisKnowsAllApiContext") ?? throw new InvalidOperationException("Connection string 'BorisKnowsAllApiContext' not found.")));
 
 builder.Services.AddSignalR();
 /*
