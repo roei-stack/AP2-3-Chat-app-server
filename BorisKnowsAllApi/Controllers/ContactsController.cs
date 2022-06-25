@@ -348,6 +348,12 @@ namespace BorisKnowsAllApi.Controllers
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
 
             //update using firebase
+
+            if (!service.ContainsTokenForUser(user))
+            {
+                return;
+            }
+
             if (!FirebaseExist)
             {
                 FirebaseApp.Create(new AppOptions()
@@ -357,17 +363,15 @@ namespace BorisKnowsAllApi.Controllers
                 FirebaseExist = true;
             }
 
-
-
             // This registration token comes from the client FCM SDKs.
-            var registrationToken = "eoRiu1Qzayo:APA91bHz0o8_sygjb3LgRjXVUOgpDw2iM98r-t1quVxwmJngtj2I14L_WX1Mapyfa9vZMBaq-jtGyks18NA5X0CkAphH_tpSuDuTLok7D15TU6GDxx6phKuaN9MzV58VcDnQVHX4_UsS";
+            var registrationToken = service.GetUserToken(user);
 
             var message = new Message()
             {
                 Token = registrationToken,
                 Notification = new Notification()
                 {
-                    Title = $"New message from {contact.id}",
+                    Title = contact.id,
                     Body = contact.GetLastMessage().content
                 }
             };
