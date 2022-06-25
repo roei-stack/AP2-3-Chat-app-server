@@ -8,6 +8,8 @@ using System.Text;
 using BorisKnowsAllApi.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using FirebaseAdmin.Messaging;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 // For more information on enablin  g Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,6 +21,7 @@ namespace BorisKnowsAllApi.Controllers
     {
         private readonly UserService service;
         private readonly IHubContext<ChatHub> hub;
+        private static bool FirebaseExist = false;
 
         public ContactsController(IHubContext<ChatHub> hub)
         {
@@ -345,25 +348,32 @@ namespace BorisKnowsAllApi.Controllers
             await this.hub.Clients.All.SendAsync("ReceiveMessage");
 
             //update using firebase
-            // This registration token comes from the client FCM SDKs.
-            var registrationToken = "fF3e9Y7VdWQ:APA91bELT0wZm2zgbF5vcrjOiXy0UrWsFEDmJ7G_X_ZkJc7y2MrG2XZJ_mRaLOAvqG9j7m6rNHTd0ZZXlZqeGVz2MFuaNneUkoPS_SZ-PaVB09OMnia1SrkwpOx_O69J5SxJVSyHgUZC";
+            if (!FirebaseExist)
+            {
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("./Keys/BorisChats_private_key.json")
+                });
+                FirebaseExist = true;
+            }
 
-            // See documentation on defining a message payload.
+
+
+            // This registration token comes from the client FCM SDKs.
+            var registrationToken = "eoRiu1Qzayo:APA91bHz0o8_sygjb3LgRjXVUOgpDw2iM98r-t1quVxwmJngtj2I14L_WX1Mapyfa9vZMBaq-jtGyks18NA5X0CkAphH_tpSuDuTLok7D15TU6GDxx6phKuaN9MzV58VcDnQVHX4_UsS";
+
             var message = new Message()
             {
+                Token = registrationToken,
                 Notification = new Notification()
                 {
-                    Title = "Test from code",
-                    Body = "Victory!"
-                },
-                Token = registrationToken,
+                    Title = $"New message from {contact.id}",
+                    Body = contact.GetLastMessage().content
+                }
             };
 
-            // Send a message to the device corresponding to the provided
-            // registration token.
-            string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
-            // Response is a message ID string.
-            Console.WriteLine("Successfully sent message: " + response);
+            // Send a message to the device corresponding to the provided registration token.
+            await FirebaseMessaging.DefaultInstance.SendAsync(message);
         }
     }
 }
